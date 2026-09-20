@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f472b6"/>
+      <stop offset="1" stop-color="#fb923c"/>
+    </linearGradient>
+    <clipPath id="disc"><circle cx="300" cy="300" r="290"/></clipPath>
+  </defs>
+  <g clip-path="url(#disc)">
+    <rect width="600" height="600" fill="url(#bg)"/>
+    <circle cx="450" cy="160" r="66" fill="#fde68a"/>
+    <path d="M50 610 C50 470 165 405 300 405 C435 405 550 470 550 610 Z" fill="url(#shirt)"/>
+    <rect x="260" y="345" width="80" height="90" rx="32" fill="#f5c9a0"/>
+    <circle cx="300" cy="275" r="100" fill="#fde2c4"/>
+    <path d="M198 268 C192 175 258 145 312 152 C374 156 414 205 402 272 C382 228 332 210 290 213 C250 217 218 238 198 268 Z" fill="#1f2937"/>
+    <circle cx="265" cy="285" r="9" fill="#1f2937"/>
+    <circle cx="335" cy="285" r="9" fill="#1f2937"/>
+    <path d="M268 325 Q300 350 332 325" fill="none" stroke="#1f2937" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>
