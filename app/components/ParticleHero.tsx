@@ -84,7 +84,7 @@ export default function ParticleHero({ image }: { image: string }) {
 
   return (
     <div className="w-full">
-      <div ref={wrapRef} className="relative h-[clamp(260px,48vh,500px)] w-full">
+      <div ref={wrapRef} className="relative h-[clamp(300px,58vh,620px)] w-full">
         <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
         <button
           type="button"

@@ -7,7 +7,7 @@ import { profile } from "../data";
 // Canvas-only, so skip SSR. The loading box reserves the same height to avoid layout shift.
 const ParticleHero = dynamic(() => import("./ParticleHero"), {
   ssr: false,
-  loading: () => <div aria-hidden="true" className="h-[clamp(260px,48vh,500px)] w-full" />,
+  loading: () => <div aria-hidden="true" className="h-[clamp(300px,58vh,620px)] w-full" />,
 });
 
 export default function Hero() {

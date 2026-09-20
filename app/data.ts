@@ -12,15 +12,15 @@ export type SkillGroup = {
 };
 
 export const profile = {
-  name: "Your Name",
-  title: "Software Developer",
-  tagline: "I build things for the web.",
+  name: "Sean Kim",
+  title: "CompE @ Georgia Tech",
+  tagline: "Based in Centreville, VA.",
   // Image the SK particles morph into on click. Swap for a photo in /public.
-  heroImage: "/hero-placeholder.svg",
-  bio: "I'm a developer who enjoys turning ideas into working software. Replace this paragraph with a couple sentences about your background, what you're interested in, and what you're currently learning or building.",
-  email: "you@example.com",
-  github: "https://github.com/your-username",
-  linkedin: "https://linkedin.com/in/your-username",
+  heroImage: "/myself.jpg",
+  bio: "I love cool designs, sustainable systems, and scalable software.",
+  email: "sean.sk07@gmail.com",
+  github: "https://github.com/thexstriker",
+  linkedin: "https://linkedin.com/in/seankim1214",
 };
 
 export const projects: Project[] = [

@@ -10,19 +10,23 @@ export const CONFIG = {
   repelForce: 2.2,
   staggerMs: 700, // ripple duration from the click point to the farthest particle
   kick: 5, // outward burst when a particle switches target
-  shimmer: 1.1, // idle wobble in px
+  shimmer: 0.9, // idle wobble in px while showing the letters
+  imageShimmer: 0.08, // ...and while showing the image: tiny, or dots drift off their tiles and leave holes
   colorLerp: 0.07,
   dotSize: 1.7, // css px
-  jitter: 0.35, // sample position jitter, fraction of grid step
-  nearWhite: 245, // image pixels lighter than this on all channels are treated as background
+  jitter: 0.35, // letter sample position jitter, fraction of grid step
+  imageJitter: 0.05, // image jitter: low, so dots tile the picture instead of clumping
+  nearWhite: 232, // image pixels lighter than this on all channels are treated as background
+  bgThreshold: 10, // near-black edge-connected pixels (e.g. a cut-out JPG's black backdrop) are removed
+  imageGamma: 0.5, // on a dark page, image colors are lifted by this gamma so dark clothes/hair still read
 } as const;
 
 type Pt = { x: number; y: number; r: number; g: number; b: number };
 type Rgb = [number, number, number];
 
-const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-const gridStep = (w: number) => clamp(Math.round(w / 180), 3, 6);
-const maxParticles = (w: number) => (w < 600 ? 4500 : 7500);
+// Sampling grid in css px: smaller = more, tighter particles = a clearer image.
+const gridStep = (w: number) => (w < 600 ? 2.5 : 2);
+const maxParticles = (w: number) => (w < 600 ? 12000 : 36000);
 
 function makeCanvas(w: number, h: number) {
   const c = document.createElement("canvas");
@@ -62,12 +66,13 @@ function sampleMask(
   h: number,
   step: number,
   skipNearWhite: boolean,
+  jitter: number,
 ): Pt[] {
   const data = ctx.getImageData(0, 0, Math.round(w), Math.round(h)).data;
   const W = Math.round(w);
   const H = Math.round(h);
   const out: Pt[] = [];
-  const j = step * CONFIG.jitter;
+  const j = step * jitter;
   for (let y = step / 2; y < H; y += step) {
     for (let x = step / 2; x < W; x += step) {
       const o = (Math.floor(y) * W + Math.floor(x)) * 4;
@@ -106,18 +111,58 @@ function sampleText(w: number, h: number, step: number, family: string): Pt[] {
     (w - inkW * k) / 2 + m.actualBoundingBoxLeft * k,
     (h - inkH * k) / 2 + m.actualBoundingBoxAscent * k,
   );
-  return sampleMask(ctx, w, h, step, false);
+  return sampleMask(ctx, w, h, step, false, CONFIG.jitter);
 }
 
 function sampleImage(img: HTMLImageElement, w: number, h: number, step: number): Pt[] {
   const { ctx } = makeCanvas(w, h);
   const iw = img.naturalWidth || 600;
   const ih = img.naturalHeight || 600;
-  const scale = Math.min((w * 0.9) / iw, (h * 0.94) / ih);
+  const scale = Math.min((w * 0.95) / iw, (h * 0.98) / ih);
   const dw = iw * scale;
   const dh = ih * scale;
   ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
-  return sampleMask(ctx, w, h, step, true);
+  removeBackground(ctx, Math.round(w), Math.round(h));
+  return sampleMask(ctx, w, h, step, true, CONFIG.imageJitter);
+}
+
+// Flood-fill from the canvas edges, clearing transparent and near-black pixels. Lets a
+// JPG cut-out with a black backdrop behave like a transparent PNG, without eating into
+// dark clothes/hair (only pixels connected to the border are cleared).
+function removeBackground(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  const id = ctx.getImageData(0, 0, W, H);
+  const d = id.data;
+  const T = CONFIG.bgThreshold;
+  const seen = new Uint8Array(W * H);
+  const stack: number[] = [];
+  const push = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    const i = y * W + x;
+    if (seen[i]) return;
+    const p = i * 4;
+    if (d[p + 3] >= 128 && (d[p] >= T || d[p + 1] >= T || d[p + 2] >= T)) return;
+    seen[i] = 1;
+    stack.push(i);
+  };
+  for (let x = 0; x < W; x++) {
+    push(x, 0);
+    push(x, H - 1);
+  }
+  for (let y = 0; y < H; y++) {
+    push(0, y);
+    push(W - 1, y);
+  }
+  while (stack.length) {
+    const i = stack.pop()!;
+    d[i * 4 + 3] = 0;
+    const x = i % W;
+    const y = (i / W) | 0;
+    push(x + 1, y);
+    push(x - 1, y);
+    push(x, y + 1);
+    push(x, y - 1);
+  }
+  ctx.putImageData(id, 0, 0);
 }
 
 function shuffle<T>(a: T[]): T[] {
@@ -172,6 +217,8 @@ export class ParticleField {
   private im = new Float32Array(0);
   private skCol = new Uint8Array(0);
   private imCol = new Uint8Array(0);
+  private imRaw = new Uint8Array(0); // image colors before the dark-theme shadow lift
+  private lut = new Uint8Array(256).map((_, i) => i); // raw -> displayed image channel value
   private col = new Float32Array(0);
   private tone = new Float32Array(0);
   private phase = new Float32Array(0);
@@ -210,7 +257,7 @@ export class ParticleField {
     this.img = await loadImage(this.imageUrl);
     if (this.destroyed) return;
     this.family = family;
-    this.accent = readCssColor("--accent", this.accent);
+    this.readTheme();
     this.assetsReady = true;
     this.build();
   }
@@ -238,9 +285,22 @@ export class ParticleField {
   }
 
   refreshColors() {
-    this.accent = readCssColor("--accent", this.accent);
-    for (let i = 0; i < this.n; i++) this.setSkColor(i);
+    this.readTheme();
+    for (let i = 0; i < this.n; i++) {
+      this.setSkColor(i);
+      this.setImColor(i);
+    }
     if (this.reduced) this.snap();
+  }
+
+  // Accent color for the letters, plus a shadow-lift curve when the page is dark.
+  private readTheme() {
+    this.accent = readCssColor("--accent", this.accent);
+    const [r, g, b] = readCssColor("--background", [255, 255, 255]);
+    const dark = 0.299 * r + 0.587 * g + 0.114 * b < 128;
+    for (let v = 0; v < 256; v++) {
+      this.lut[v] = dark ? Math.round(255 * Math.pow(v / 255, CONFIG.imageGamma)) : v;
+    }
   }
 
   setVisible(v: boolean) {
@@ -288,6 +348,10 @@ export class ParticleField {
     this.skCol[i * 3 + 2] = this.accent[2] * t;
   }
 
+  private setImColor(i: number) {
+    for (let c = 0; c < 3; c++) this.imCol[i * 3 + c] = this.lut[this.imRaw[i * 3 + c]];
+  }
+
   private build() {
     if (!this.assetsReady || this.w < 2 || this.h < 2 || this.destroyed) return;
     const step = gridStep(this.w);
@@ -311,6 +375,7 @@ export class ParticleField {
     this.im = new Float32Array(n * 2);
     this.skCol = new Uint8Array(n * 3);
     this.imCol = new Uint8Array(n * 3);
+    this.imRaw = new Uint8Array(n * 3);
     this.col = new Float32Array(n * 3);
     this.tone = new Float32Array(n);
     this.phase = new Float32Array(n);
@@ -322,9 +387,10 @@ export class ParticleField {
       this.sk[i * 2 + 1] = sk[i].y;
       this.im[i * 2] = im[i].x;
       this.im[i * 2 + 1] = im[i].y;
-      this.imCol[i * 3] = im[i].r;
-      this.imCol[i * 3 + 1] = im[i].g;
-      this.imCol[i * 3 + 2] = im[i].b;
+      this.imRaw[i * 3] = im[i].r;
+      this.imRaw[i * 3 + 1] = im[i].g;
+      this.imRaw[i * 3 + 2] = im[i].b;
+      this.setImColor(i);
       this.tone[i] = 0.7 + Math.random() * 0.3;
       this.phase[i] = Math.random() * Math.PI * 2;
       this.setSkColor(i);
@@ -348,6 +414,7 @@ export class ParticleField {
     this.oldH = this.h;
 
     if (this.reduced) this.snap();
+    else this.draw(); // paint immediately; the loop takes over once visible
     this.update();
   }
 
@@ -411,8 +478,9 @@ export class ParticleField {
       }
 
       const tgt = want[i] ? im : sk;
-      const tx = tgt[i2] + Math.cos(t + phase[i]) * CONFIG.shimmer;
-      const ty = tgt[i2 + 1] + Math.sin(t * 1.3 + phase[i]) * CONFIG.shimmer;
+      const sh = want[i] ? CONFIG.imageShimmer : CONFIG.shimmer;
+      const tx = tgt[i2] + Math.cos(t + phase[i]) * sh;
+      const ty = tgt[i2 + 1] + Math.sin(t * 1.3 + phase[i]) * sh;
       let x = pos[i2];
       let y = pos[i2 + 1];
       let ax = (tx - x) * k;
