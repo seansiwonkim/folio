@@ -11,11 +11,11 @@ export const CONFIG = {
   staggerMs: 700, // ripple duration from the click point to the farthest particle
   kick: 5, // outward burst when a particle switches target
   shimmer: 0.9, // idle wobble in px while showing the letters
-  imageShimmer: 0.08, // ...and while showing the image: tiny, or dots drift off their tiles and leave holes
+  imageShimmer: 0.02,
   colorLerp: 0.07,
-  dotSize: 1.7, // css px
+  dotSize: 2.35, // css px
   jitter: 0.35, // letter sample position jitter, fraction of grid step
-  imageJitter: 0.05, // image jitter: low, so dots tile the picture instead of clumping
+  imageJitter: 0.01,
   nearWhite: 232, // image pixels lighter than this on all channels are treated as background
   bgThreshold: 10, // near-black edge-connected pixels (e.g. a cut-out JPG's black backdrop) are removed
   imageGamma: 0.5, // on a dark page, image colors are lifted by this gamma so dark clothes/hair still read
@@ -25,8 +25,8 @@ type Pt = { x: number; y: number; r: number; g: number; b: number };
 type Rgb = [number, number, number];
 
 // Sampling grid in css px: smaller = more, tighter particles = a clearer image.
-const gridStep = (w: number) => (w < 600 ? 2.5 : 2);
-const maxParticles = (w: number) => (w < 600 ? 12000 : 36000);
+const gridStep = (w: number) => (w < 600 ? 1.15 : 1);
+const maxParticles = (w: number) => (w < 600 ? 45000 : 100000);
 
 function makeCanvas(w: number, h: number) {
   const c = document.createElement("canvas");
@@ -39,7 +39,9 @@ function makeCanvas(w: number, h: number) {
 
 function readCssColor(name: string, fallback: Rgb): Rgb {
   try {
-    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim();
     if (!raw) return fallback;
     const { ctx } = makeCanvas(1, 1);
     ctx.fillStyle = raw;
@@ -80,7 +82,13 @@ function sampleMask(
       const r = data[o];
       const g = data[o + 1];
       const b = data[o + 2];
-      if (skipNearWhite && r > CONFIG.nearWhite && g > CONFIG.nearWhite && b > CONFIG.nearWhite) continue;
+      if (
+        skipNearWhite &&
+        r > CONFIG.nearWhite &&
+        g > CONFIG.nearWhite &&
+        b > CONFIG.nearWhite
+      )
+        continue;
       out.push({
         x: x + (Math.random() - 0.5) * 2 * j,
         y: y + (Math.random() - 0.5) * 2 * j,
@@ -114,7 +122,12 @@ function sampleText(w: number, h: number, step: number, family: string): Pt[] {
   return sampleMask(ctx, w, h, step, false, CONFIG.jitter);
 }
 
-function sampleImage(img: HTMLImageElement, w: number, h: number, step: number): Pt[] {
+function sampleImage(
+  img: HTMLImageElement,
+  w: number,
+  h: number,
+  step: number,
+): Pt[] {
   const { ctx } = makeCanvas(w, h);
   const iw = img.naturalWidth || 600;
   const ih = img.naturalHeight || 600;
@@ -140,7 +153,8 @@ function removeBackground(ctx: CanvasRenderingContext2D, W: number, H: number) {
     const i = y * W + x;
     if (seen[i]) return;
     const p = i * 4;
-    if (d[p + 3] >= 128 && (d[p] >= T || d[p + 1] >= T || d[p + 2] >= T)) return;
+    if (d[p + 3] >= 128 && (d[p] >= T || d[p + 1] >= T || d[p + 2] >= T))
+      return;
     seen[i] = 1;
     stack.push(i);
   };
@@ -179,7 +193,11 @@ function resample(pts: Pt[], n: number, step: number): Pt[] {
   const out = pts.slice();
   while (out.length < n) {
     const p = pts[Math.floor(Math.random() * pts.length)];
-    out.push({ ...p, x: p.x + (Math.random() - 0.5) * step, y: p.y + (Math.random() - 0.5) * step });
+    out.push({
+      ...p,
+      x: p.x + (Math.random() - 0.5) * step,
+      y: p.y + (Math.random() - 0.5) * step,
+    });
   }
   return out;
 }
@@ -250,7 +268,10 @@ export class ParticleField {
   async init() {
     const family = getComputedStyle(document.body).fontFamily || "sans-serif";
     try {
-      await document.fonts.load(`${CONFIG.textWeight} 100px ${family}`, CONFIG.text);
+      await document.fonts.load(
+        `${CONFIG.textWeight} 100px ${family}`,
+        CONFIG.text,
+      );
     } catch {
       // fall through to whatever font is available
     }
@@ -299,7 +320,9 @@ export class ParticleField {
     const [r, g, b] = readCssColor("--background", [255, 255, 255]);
     const dark = 0.299 * r + 0.587 * g + 0.114 * b < 128;
     for (let v = 0; v < 256; v++) {
-      this.lut[v] = dark ? Math.round(255 * Math.pow(v / 255, CONFIG.imageGamma)) : v;
+      this.lut[v] = dark
+        ? Math.round(255 * Math.pow(v / 255, CONFIG.imageGamma))
+        : v;
     }
   }
 
@@ -338,7 +361,8 @@ export class ParticleField {
       d[i] = Math.hypot(this.pos[i * 2] - cx, this.pos[i * 2 + 1] - cy);
       if (d[i] > maxD) maxD = d[i];
     }
-    for (let i = 0; i < this.n; i++) this.trig[i] = now + (CONFIG.staggerMs * d[i]) / maxD;
+    for (let i = 0; i < this.n; i++)
+      this.trig[i] = now + (CONFIG.staggerMs * d[i]) / maxD;
   }
 
   private setSkColor(i: number) {
@@ -349,7 +373,8 @@ export class ParticleField {
   }
 
   private setImColor(i: number) {
-    for (let c = 0; c < 3; c++) this.imCol[i * 3 + c] = this.lut[this.imRaw[i * 3 + c]];
+    for (let c = 0; c < 3; c++)
+      this.imCol[i * 3 + c] = this.lut[this.imRaw[i * 3 + c]];
   }
 
   private build() {
@@ -360,11 +385,20 @@ export class ParticleField {
     if (imPts.length === 0) imPts = skPts; // image failed to load: morph is a no-op
     if (skPts.length === 0) return;
 
-    const n = Math.min(Math.max(skPts.length, imPts.length), maxParticles(this.w));
+    const n = Math.min(
+      Math.max(skPts.length, imPts.length),
+      maxParticles(this.w),
+    );
     const sk = sortByX(resample(skPts, n, step), step);
     const im = sortByX(resample(imPts, n, step), step);
 
-    const old = { n: this.n, pos: this.pos, vel: this.vel, col: this.col, want: this.want };
+    const old = {
+      n: this.n,
+      pos: this.pos,
+      vel: this.vel,
+      col: this.col,
+      want: this.want,
+    };
     const sx = this.oldW ? this.w / this.oldW : 1;
     const sy = this.oldH ? this.h / this.oldH : 1;
 
@@ -435,7 +469,12 @@ export class ParticleField {
   }
 
   private update = () => {
-    const should = this.visible && !document.hidden && !this.reduced && this.n > 0 && !this.destroyed;
+    const should =
+      this.visible &&
+      !document.hidden &&
+      !this.reduced &&
+      this.n > 0 &&
+      !this.destroyed;
     if (should && !this.running) {
       this.running = true;
       this.last = performance.now();
@@ -456,7 +495,8 @@ export class ParticleField {
   };
 
   private step(now: number, dt: number) {
-    const { n, pos, vel, sk, im, col, skCol, imCol, want, trig, phase, mode } = this;
+    const { n, pos, vel, sk, im, col, skCol, imCol, want, trig, phase, mode } =
+      this;
     const damp = Math.pow(CONFIG.friction, dt);
     const k = CONFIG.springK * dt;
     const t = now * 0.0015;
@@ -522,7 +562,11 @@ export class ParticleField {
       const px = Math.round(pos[i * 2] * dpr - dot / 2);
       const py = Math.round(pos[i * 2 + 1] * dpr - dot / 2);
       if (px < 0 || py < 0 || px > W - dot || py > H - dot) continue;
-      const rgba = (255 << 24) | (col[i * 3 + 2] << 16) | (col[i * 3 + 1] << 8) | col[i * 3];
+      const rgba =
+        (255 << 24) |
+        (col[i * 3 + 2] << 16) |
+        (col[i * 3 + 1] << 8) |
+        col[i * 3];
       for (let yy = 0; yy < dot; yy++) {
         const row = (py + yy) * W + px;
         for (let xx = 0; xx < dot; xx++) buf[row + xx] = rgba;

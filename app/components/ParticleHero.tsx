@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ParticleField } from "../lib/particles";
 
 export default function ParticleHero({ image }: { image: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<ParticleField | null>(null);
-  const [ready, setReady] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  const [used, setUsed] = useState(false);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -24,7 +21,11 @@ export default function ParticleHero({ image }: { image: string }) {
     }
     fieldRef.current = field;
     let alive = true;
-    field.init().then(() => alive && setReady(true));
+    field.init().then(() => {
+      if (!alive) return;
+      const bounds = wrap.getBoundingClientRect();
+      field.setMode(1, bounds.width / 2, bounds.height / 2);
+    });
 
     const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onMotion = () => field.setReducedMotion(mqMotion.matches);
@@ -35,7 +36,9 @@ export default function ParticleHero({ image }: { image: string }) {
     const onScheme = () => field.refreshColors();
     mqDark.addEventListener("change", onScheme);
 
-    const io = new IntersectionObserver(([e]) => field.setVisible(e.isIntersecting));
+    const io = new IntersectionObserver(([e]) =>
+      field.setVisible(e.isIntersecting),
+    );
     io.observe(wrap);
 
     let first = true;
@@ -65,51 +68,30 @@ export default function ParticleHero({ image }: { image: string }) {
     };
   }, [image]);
 
-  const local = (e: React.PointerEvent | React.MouseEvent) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top, r };
-  };
-
-  const toggle = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const field = fieldRef.current;
-    if (!field || !ready) return;
-    const next = !revealed;
-    const { x, y, r } = local(e);
-    // Keyboard activation reports (0, 0); ripple from the center instead.
-    const fromKeyboard = e.detail === 0;
-    field.setMode(next ? 1 : 0, fromKeyboard ? r.width / 2 : x, fromKeyboard ? r.height / 2 : y);
-    setRevealed(next);
-    setUsed(true);
-  };
-
   return (
-    <div className="w-full">
-      <div ref={wrapRef} className="relative h-[clamp(300px,58vh,620px)] w-full">
-        <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
-        <button
-          type="button"
-          aria-label="Reveal image"
-          aria-pressed={revealed}
-          disabled={!ready}
-          onClick={toggle}
-          onPointerMove={(e) => {
-            const { x, y } = local(e);
-            fieldRef.current?.setPointer(x, y);
-          }}
-          onPointerLeave={() => fieldRef.current?.clearPointer()}
-          onPointerCancel={() => fieldRef.current?.clearPointer()}
-          onPointerUp={(e) => e.pointerType === "touch" && fieldRef.current?.clearPointer()}
-          className="absolute inset-0 cursor-pointer rounded-2xl outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default"
+    <div
+      className="relative aspect-[4/5] w-full max-w-md overflow-hidden bg-background"
+      onPointerMove={(event) => {
+        if (event.pointerType === "touch") {
+          fieldRef.current?.clearPointer();
+          return;
+        }
+        const bounds = event.currentTarget.getBoundingClientRect();
+        fieldRef.current?.setPointer(
+          event.clientX - bounds.left,
+          event.clientY - bounds.top,
+        );
+      }}
+      onPointerLeave={() => fieldRef.current?.clearPointer()}
+      onPointerCancel={() => fieldRef.current?.clearPointer()}
+    >
+      <div ref={wrapRef} className="absolute inset-0">
+        <canvas
+          ref={canvasRef}
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full"
         />
       </div>
-      <p
-        aria-hidden="true"
-        className={`mt-1 h-4 select-none text-center text-xs tracking-widest text-muted uppercase transition-opacity duration-500 ${
-          ready ? "opacity-100" : "opacity-0"
-        } ${used ? "" : "animate-pulse"}`}
-      >
-        {revealed ? "Click to go back" : "Click to reveal"}
-      </p>
     </div>
   );
 }

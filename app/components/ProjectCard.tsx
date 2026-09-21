@@ -5,14 +5,19 @@ import type { Project } from "../data";
 
 export default function ProjectCard({ project }: { project: Project }) {
   return (
-    <motion.div
+    <motion.button
+      type="button"
+      layoutId={`project-${project.title}`}
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.4 }}
-      className="rounded-2xl border border-border p-6 transition-colors hover:border-accent/50"
+      className="w-full rounded-2xl border border-border p-6 text-left transition-colors hover:border-accent/50"
     >
-      <h3 className="text-lg font-semibold">{project.title}</h3>
+      <div className="flex items-start justify-between gap-4">
+        <h3 className="text-lg font-semibold">{project.title}</h3>
+        <span className="text-xs text-muted">{project.year}</span>
+      </div>
       <p className="mt-2 text-sm leading-relaxed text-muted">
         {project.description}
       </p>
@@ -26,28 +31,9 @@ export default function ProjectCard({ project }: { project: Project }) {
           </li>
         ))}
       </ul>
-      <div className="mt-4 flex gap-4 text-sm">
-        {project.repoUrl && (
-          <a
-            href={project.repoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-accent hover:underline"
-          >
-            Code
-          </a>
-        )}
-        {project.demoUrl && (
-          <a
-            href={project.demoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-accent hover:underline"
-          >
-            Live demo
-          </a>
-        )}
-      </div>
-    </motion.div>
+      <p className="mt-6 text-sm font-medium text-accent">
+        Open case study <span aria-hidden="true">↗</span>
+      </p>
+    </motion.button>
   );
 }
