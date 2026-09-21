@@ -16,7 +16,7 @@ export const profile = {
   title: "CompE @ Georgia Tech",
   tagline: "Based in Centreville, VA.",
   // Image the SK particles morph into on click. Swap for a photo in /public.
-  heroImage: "/myself.jpg",
+  heroImage: "/next-portfolio/myself.jpg",
   bio: "I love cool designs, sustainable systems, and scalable software.",
   email: "sean.sk07@gmail.com",
   github: "https://github.com/thexstriker",
