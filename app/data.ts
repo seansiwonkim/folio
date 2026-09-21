@@ -19,7 +19,7 @@ export const profile = {
   education: "Computer Engineering @ Georgia Tech",
   role: "SWE/AI/ML/Hardware",
   location: "Centreville, VA",
-  heroImage: `${process.env.NODE_ENV === "production" ? "/next-portfolio" : ""}/myself.jpg`,
+  heroImage: `${process.env.NODE_ENV === "production" ? "/folio" : ""}/myself.jpg`,
   bio: "I love cool designs, sustainable systems, and scalable software.",
   email: "sean.sk07@gmail.com",
   github: "https://github.com/thexstriker",

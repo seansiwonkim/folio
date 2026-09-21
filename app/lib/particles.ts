@@ -13,7 +13,7 @@ export const CONFIG = {
   shimmer: 0.9, // idle wobble in px while showing the letters
   imageShimmer: 0.02,
   colorLerp: 0.07,
-  dotSize: 2.35, // css px
+  dotSize: 2.8, // css px
   jitter: 0.35, // letter sample position jitter, fraction of grid step
   imageJitter: 0.01,
   nearWhite: 232, // image pixels lighter than this on all channels are treated as background
@@ -25,8 +25,8 @@ type Pt = { x: number; y: number; r: number; g: number; b: number };
 type Rgb = [number, number, number];
 
 // Sampling grid in css px: smaller = more, tighter particles = a clearer image.
-const gridStep = (w: number) => (w < 600 ? 1.15 : 1);
-const maxParticles = (w: number) => (w < 600 ? 45000 : 100000);
+const gridStep = (w: number) => (w < 600 ? 0.85 : 0.75);
+const maxParticles = (w: number) => (w < 600 ? 150000 : 180000);
 
 function makeCanvas(w: number, h: number) {
   const c = document.createElement("canvas");
