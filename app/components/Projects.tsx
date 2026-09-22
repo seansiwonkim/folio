@@ -27,7 +27,7 @@ function ProjectDetail({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] overflow-y-auto bg-background/95 px-6 py-8 backdrop-blur-xl sm:px-10"
+      className="fixed inset-0 z-100 overflow-y-auto bg-background/95 px-6 py-8 backdrop-blur-xl sm:px-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -50,7 +50,7 @@ function ProjectDetail({
           layoutId={`project-${project.title}`}
           className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]"
         >
-          <div className="relative aspect-[16/10] overflow-hidden rounded-3xl border border-border bg-foreground/5">
+          <div className="relative aspect-16/10 overflow-hidden rounded-3xl border border-border bg-foreground/5">
             {project.images?.[0] ? (
               <Image
                 src={project.images[0]}

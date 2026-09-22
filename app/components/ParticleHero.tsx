@@ -70,7 +70,7 @@ export default function ParticleHero({ image }: { image: string }) {
 
   return (
     <div
-      className="relative aspect-[4/5] w-full max-w-md overflow-hidden bg-background"
+      className="relative aspect-4/5 w-full max-w-md overflow-hidden bg-background"
       onPointerMove={(event) => {
         if (event.pointerType === "touch") {
           fieldRef.current?.clearPointer();

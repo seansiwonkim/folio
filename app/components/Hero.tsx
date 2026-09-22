@@ -6,7 +6,7 @@ import { profile } from "../data";
 
 const ParticleHero = dynamic(() => import("./ParticleHero"), {
   ssr: false,
-  loading: () => <div className="aspect-[4/5] w-full max-w-md bg-background" />,
+  loading: () => <div className="aspect-4/5 w-full max-w-md bg-background" />,
 });
 
 export default function Hero() {
