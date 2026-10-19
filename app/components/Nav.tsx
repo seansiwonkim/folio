@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { profile } from "../data";
 
 const links = [
   { href: "#about", label: "About" },
@@ -29,12 +30,12 @@ export default function Nav() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/80 backdrop-blur">
-      <nav className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-4">
+      <nav className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
         <a href="#top" className="font-semibold tracking-tight">
           Sean Kim
         </a>
         <div className="flex items-center gap-5">
-          <ul className="flex gap-6 text-sm text-muted">
+          <ul className="hidden gap-6 text-sm text-muted sm:flex">
             {links.map((link) => (
               <li key={link.href}>
                 <a
@@ -46,6 +47,13 @@ export default function Nav() {
               </li>
             ))}
           </ul>
+          <a
+            href={profile.resume}
+            download="Sean_Kim_Resume.pdf"
+            className="hidden rounded-full border border-accent px-4 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-background sm:block"
+          >
+            Resume
+          </a>
           <button
             type="button"
             onClick={toggleTheme}
