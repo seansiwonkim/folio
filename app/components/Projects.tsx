@@ -34,9 +34,7 @@ function ProjectDetail({
     >
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-widest text-muted">
-            Project details
-          </span>
+          <span className="text-sm text-muted">Project details</span>
           <button
             type="button"
             onClick={onClose}
@@ -76,6 +74,11 @@ function ProjectDetail({
             <p className="mt-6 text-lg leading-relaxed text-muted">
               {project.details}
             </p>
+            <ul className="mt-6 list-disc space-y-3 pl-5 text-muted">
+              {project.highlights.map((h) => (
+                <li key={h}>{h}</li>
+              ))}
+            </ul>
             <ul className="mt-8 flex flex-wrap gap-2">
               {project.tags.map((tag) => (
                 <li
@@ -94,7 +97,7 @@ function ProjectDetail({
                   rel="noreferrer"
                   className="text-accent hover:underline"
                 >
-                  View code ↗
+                  View code
                 </a>
               )}
               {project.demoUrl && (
@@ -104,7 +107,7 @@ function ProjectDetail({
                   rel="noreferrer"
                   className="text-accent hover:underline"
                 >
-                  Live demo ↗
+                  Live demo
                 </a>
               )}
             </div>
@@ -121,7 +124,7 @@ export default function Projects() {
   return (
     <>
       <Section id="projects" title="Projects">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5">
           {projects.map((project) => (
             <div key={project.title} onClick={() => setSelected(project)}>
               <ProjectCard project={project} />

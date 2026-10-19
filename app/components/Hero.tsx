@@ -16,18 +16,11 @@ export default function Hero() {
       className="mx-auto grid min-h-[80vh] w-full max-w-5xl items-center gap-12 px-6 py-16 lg:grid-cols-[1fr_0.9fr] lg:gap-20"
     >
       <div>
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 text-sm font-medium uppercase tracking-widest text-accent"
-        >
-          Hello, I&apos;m
-        </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
-          className="text-5xl font-semibold tracking-tight sm:text-7xl"
+          className="text-6xl font-semibold tracking-tighter sm:text-8xl"
         >
           {profile.name}
         </motion.h1>
@@ -45,11 +38,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.24 }}
-          className="mt-9 flex gap-4"
+          className="mt-9 flex flex-wrap gap-3"
         >
           <a
             href="#projects"
-            className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             View Projects
           </a>
@@ -58,6 +51,13 @@ export default function Hero() {
             className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-foreground/5"
           >
             Contact
+          </a>
+          <a
+            href={profile.resume}
+            download="Sean_Kim_Resume.pdf"
+            className="rounded-full border border-accent px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-background"
+          >
+            Download resume
           </a>
         </motion.div>
       </div>
